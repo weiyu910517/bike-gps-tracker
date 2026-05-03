@@ -663,31 +663,36 @@ MONITOR_HTML = r"""
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>自行車 GPS 監控端</title>
+  <title>自行車 GPS 多人監控端</title>
 
   <link
     rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIINfQIB3dBzGM9XJ5edJ1A6rw0F1QagQAY="
-    crossorigin=""
+    href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
   />
 
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
     html, body {
       height: 100%;
+      width: 100%;
       margin: 0;
+      padding: 0;
+      overflow: hidden;
       font-family: Arial, 'Microsoft JhengHei', sans-serif;
     }
 
     #map {
-      height: 100%;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .leaflet-container {
       width: 100%;
+      height: 100%;
     }
 
     .panel {
@@ -699,8 +704,10 @@ MONITOR_HTML = r"""
       padding: 14px 16px;
       border-radius: 14px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.25);
-      min-width: 280px;
-      max-width: 380px;
+      min-width: 330px;
+      max-width: 430px;
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     .panel h2 {
@@ -723,14 +730,45 @@ MONITOR_HTML = r"""
 
     .online {
       color: #2e7d32;
+      font-weight: bold;
     }
 
     .offline {
       color: #c62828;
+      font-weight: bold;
     }
 
     .weak {
       color: #ef6c00;
+      font-weight: bold;
+    }
+
+    .rider-card {
+      border-top: 1px solid #ddd;
+      padding-top: 8px;
+      margin-top: 8px;
+    }
+
+    .rider-title {
+      font-size: 15px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    .dot-rider01 {
+      background: #d32f2f;
+    }
+
+    .dot-rider02 {
+      background: #1976d2;
     }
 
     button {
@@ -748,72 +786,56 @@ MONITOR_HTML = r"""
   <div id="map"></div>
 
   <div class="panel">
-    <h2>自行車 GPS 監控</h2>
+    <h2>自行車 GPS 多人監控</h2>
 
     <div class="row">
-      <span class="label">Rider：</span>
-      <span id="rider" class="value">rider01</span>
+      <span class="label">監控對象：</span>
+      <span class="value">rider01、rider02</span>
     </div>
 
     <div class="row">
-      <span class="label">狀態：</span>
-      <span id="status" class="value">等待資料</span>
+      <span class="label">整體狀態：</span>
+      <span id="globalStatus" class="value weak">等待騎手資料</span>
     </div>
 
-    <div class="row">
-      <span class="label">Latitude：</span>
-      <span id="lat" class="value">--</span>
-    </div>
+    <div id="riderInfo"></div>
 
-    <div class="row">
-      <span class="label">Longitude：</span>
-      <span id="lng" class="value">--</span>
-    </div>
-
-    <div class="row">
-      <span class="label">Speed：</span>
-      <span id="speed" class="value">--</span> km/h
-    </div>
-
-    <div class="row">
-      <span class="label">Accuracy：</span>
-      <span id="accuracy" class="value">--</span> m
-    </div>
-
-    <div class="row">
-      <span class="label">最後更新：</span>
-      <span id="lastUpdate" class="value">--</span>
-    </div>
-
-    <div class="row">
-      <span class="label">距上次回傳：</span>
-      <span id="age" class="value">--</span>
-    </div>
-
-    <button onclick="fitRoute()">縮放到路線</button>
-    <button onclick="toggleFollow()">切換跟隨騎士</button>
+    <button onclick="fitRoute()">縮放到預定路線</button>
+    <button onclick="fitAllRiders()">縮放到所有騎手</button>
+    <button onclick="toggleFollow()">切換跟隨所有騎手</button>
   </div>
 
 <script>
 let map;
 let routeLine;
-let trackLine;
-let riderMarker;
 let plannedRoute = [];
-let currentRider = 'rider01';
-let followRider = true;
-let lastServerTimestamp = null;
+let followAllRiders = true;
 
-const routeStyle = {
-  color: '#1976d2',
-  weight: 5,
-  opacity: 0.75
+// 目前先固定監控兩位騎手
+const riderIds = ['rider01', 'rider02'];
+
+// 每位騎手各自有 marker 與軌跡線
+let riderMarkers = {};
+let riderTrackLines = {};
+let riderLastServerTime = {};
+let latestCache = {};
+
+const riderStyles = {
+  rider01: {
+    color: '#d32f2f',
+    label: 'Rider 01'
+  },
+  rider02: {
+    color: '#1976d2',
+    label: 'Rider 02'
+  }
 };
 
-const trackStyle = {
-  color: '#d32f2f',
-  weight: 4,
-  opacity: 0.85
+const routeStyle = {
+  color: '#333333',
+  weight: 5,
+  opacity: 0.65,
+  dashArray: '8, 8'
 };
 
 function initMap() {
@@ -824,7 +846,16 @@ function initMap() {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  trackLine = L.polyline([], trackStyle).addTo(map);
+  // 建立兩位 rider 的空軌跡線
+  riderIds.forEach(riderId => {
+    const style = riderStyles[riderId] || { color: '#000000' };
+
+    riderTrackLines[riderId] = L.polyline([], {
+      color: style.color,
+      weight: 4,
+      opacity: 0.85
+    }).addTo(map);
+  });
 }
 
 async function loadRoute() {
@@ -852,115 +883,253 @@ function fitRoute() {
   }
 }
 
+function fitAllRiders() {
+  const group = [];
+
+  Object.values(riderMarkers).forEach(marker => {
+    group.push(marker.getLatLng());
+  });
+
+  if (group.length > 0) {
+    map.fitBounds(L.latLngBounds(group), {
+      padding: [60, 60],
+      maxZoom: 17
+    });
+  }
+}
+
 function toggleFollow() {
-  followRider = !followRider;
+  followAllRiders = !followAllRiders;
 }
 
-function setStatus(text, cls) {
-  const el = document.getElementById('status');
-  el.textContent = text;
-  el.className = 'value ' + (cls || '');
-}
+function getRiderAgeSec(riderId) {
+  const t = riderLastServerTime[riderId];
 
-function updateInfo(loc) {
-  document.getElementById('rider').textContent = loc.rider || currentRider;
-  document.getElementById('lat').textContent = loc.lat.toFixed(7);
-  document.getElementById('lng').textContent = loc.lng.toFixed(7);
-
-  let speedKmh = null;
-
-  if (loc.speed !== null && loc.speed !== undefined) {
-    speedKmh = loc.speed * 3.6;
+  if (!t) {
+    return null;
   }
 
-  document.getElementById('speed').textContent =
-    speedKmh === null ? '--' : speedKmh.toFixed(1);
-
-  document.getElementById('accuracy').textContent =
-    loc.accuracy === null || loc.accuracy === undefined
-      ? '--'
-      : loc.accuracy.toFixed(1);
-
-  const t = loc.server_time || loc.timestamp;
-  lastServerTimestamp = t ? new Date(t) : new Date();
-
-  document.getElementById('lastUpdate').textContent =
-    lastServerTimestamp.toLocaleTimeString();
+  return (new Date() - t) / 1000;
 }
 
-function updateAgeStatus() {
-  if (!lastServerTimestamp) {
-    document.getElementById('age').textContent = '--';
-    return;
+function getStatusByAge(ageSec) {
+  if (ageSec === null) {
+    return {
+      text: '等待資料',
+      cls: 'weak'
+    };
   }
-
-  const ageSec = (new Date() - lastServerTimestamp) / 1000;
-
-  document.getElementById('age').textContent = ageSec.toFixed(0) + ' 秒';
 
   if (ageSec < 30) {
-    setStatus('Online，即時追蹤中', 'online');
-  } else if (ageSec < 180) {
-    setStatus('訊號偏弱或更新延遲', 'weak');
-  } else {
-    setStatus('Offline，顯示最後位置', 'offline');
+    return {
+      text: 'Online',
+      cls: 'online'
+    };
   }
+
+  if (ageSec < 180) {
+    return {
+      text: '訊號偏弱 / 更新延遲',
+      cls: 'weak'
+    };
+  }
+
+  return {
+    text: 'Offline，顯示最後位置',
+    cls: 'offline'
+  };
+}
+
+function updateGlobalStatus() {
+  const el = document.getElementById('globalStatus');
+
+  let onlineCount = 0;
+  let hasAnyData = false;
+
+  riderIds.forEach(riderId => {
+    const ageSec = getRiderAgeSec(riderId);
+
+    if (ageSec !== null) {
+      hasAnyData = true;
+    }
+
+    if (ageSec !== null && ageSec < 30) {
+      onlineCount += 1;
+    }
+  });
+
+  if (!hasAnyData) {
+    el.textContent = '等待騎手資料';
+    el.className = 'value weak';
+  } else if (onlineCount === riderIds.length) {
+    el.textContent = '所有騎手 Online';
+    el.className = 'value online';
+  } else if (onlineCount > 0) {
+    el.textContent = `${onlineCount}/${riderIds.length} 位騎手 Online`;
+    el.className = 'value weak';
+  } else {
+    el.textContent = '所有騎手皆未即時更新';
+    el.className = 'value offline';
+  }
+}
+
+function renderRiderPanel(latest) {
+  const container = document.getElementById('riderInfo');
+  let html = '';
+
+  riderIds.forEach(riderId => {
+    const loc = latest[riderId];
+    const ageSec = getRiderAgeSec(riderId);
+    const status = getStatusByAge(ageSec);
+
+    let latText = '--';
+    let lngText = '--';
+    let speedText = '--';
+    let accuracyText = '--';
+    let lastUpdateText = '--';
+    let ageText = '--';
+
+    if (loc) {
+      latText = Number(loc.lat).toFixed(7);
+      lngText = Number(loc.lng).toFixed(7);
+
+      if (loc.speed !== null && loc.speed !== undefined) {
+        speedText = (Number(loc.speed) * 3.6).toFixed(1) + ' km/h';
+      }
+
+      if (loc.accuracy !== null && loc.accuracy !== undefined) {
+        accuracyText = Number(loc.accuracy).toFixed(1) + ' m';
+      }
+
+      const t = riderLastServerTime[riderId];
+
+      if (t) {
+        lastUpdateText = t.toLocaleTimeString();
+      }
+
+      if (ageSec !== null) {
+        ageText = ageSec.toFixed(0) + ' 秒';
+      }
+    }
+
+    html += `
+      <div class="rider-card">
+        <div class="rider-title">
+          <span class="dot dot-${riderId}"></span>${riderId}
+        </div>
+        <div class="row"><span class="label">狀態：</span><span class="${status.cls}">${status.text}</span></div>
+        <div class="row"><span class="label">Latitude：</span><span class="value">${latText}</span></div>
+        <div class="row"><span class="label">Longitude：</span><span class="value">${lngText}</span></div>
+        <div class="row"><span class="label">Speed：</span><span class="value">${speedText}</span></div>
+        <div class="row"><span class="label">Accuracy：</span><span class="value">${accuracyText}</span></div>
+        <div class="row"><span class="label">最後更新：</span><span class="value">${lastUpdateText}</span></div>
+        <div class="row"><span class="label">距上次回傳：</span><span class="value">${ageText}</span></div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function createRiderIcon(riderId) {
+  const style = riderStyles[riderId] || { color: '#000000' };
+
+  return L.divIcon({
+    className: 'custom-rider-icon',
+    html: `
+      <div style="
+        background:${style.color};
+        width:18px;
+        height:18px;
+        border-radius:50%;
+        border:3px solid white;
+        box-shadow:0 1px 6px rgba(0,0,0,0.45);
+      "></div>
+    `,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
+  });
 }
 
 async function updateLatest() {
   try {
     const res = await fetch('/api/latest');
     const data = await res.json();
-
     const latest = data.latest || {};
-    const loc = latest[currentRider];
+    latestCache = latest;
 
-    if (!loc) {
-      setStatus('等待手機端資料', 'weak');
-      return;
-    }
+    riderIds.forEach(riderId => {
+      const loc = latest[riderId];
 
-    const latlng = [loc.lat, loc.lng];
+      if (!loc) {
+        return;
+      }
 
-    if (!riderMarker) {
-      riderMarker = L.marker(latlng).addTo(map).bindPopup(currentRider);
-    } else {
-      riderMarker.setLatLng(latlng);
-    }
+      const latlng = [Number(loc.lat), Number(loc.lng)];
+      const t = loc.server_time || loc.timestamp;
 
-    updateInfo(loc);
+      riderLastServerTime[riderId] = t ? new Date(t) : new Date();
 
-    if (followRider) {
-      map.panTo(latlng);
+      if (!riderMarkers[riderId]) {
+        riderMarkers[riderId] = L.marker(latlng, {
+          icon: createRiderIcon(riderId)
+        })
+          .addTo(map)
+          .bindPopup(riderId);
+      } else {
+        riderMarkers[riderId].setLatLng(latlng);
+      }
+    });
+
+    renderRiderPanel(latest);
+    updateGlobalStatus();
+
+    if (followAllRiders) {
+      fitAllRiders();
     }
   } catch (err) {
-    setStatus('伺服器連線錯誤', 'offline');
+    const el = document.getElementById('globalStatus');
+    el.textContent = '伺服器連線錯誤';
+    el.className = 'value offline';
   }
 }
 
-async function updateTrack() {
+async function updateTrackForRider(riderId) {
   try {
-    const res = await fetch('/api/track?rider=' + encodeURIComponent(currentRider));
+    const res = await fetch('/api/track?rider=' + encodeURIComponent(riderId));
     const data = await res.json();
 
     const track = data.track || [];
-    const latlngs = track.map(p => [p.lat, p.lng]);
+    const latlngs = track.map(p => [Number(p.lat), Number(p.lng)]);
 
-    trackLine.setLatLngs(latlngs);
+    if (riderTrackLines[riderId]) {
+      riderTrackLines[riderId].setLatLngs(latlngs);
+    }
   } catch (err) {
     // ignore
   }
+}
+
+async function updateAllTracks() {
+  for (const riderId of riderIds) {
+    await updateTrackForRider(riderId);
+  }
+}
+
+function updateAgeStatusOnly() {
+  updateGlobalStatus();
+  renderRiderPanel(latestCache);
 }
 
 initMap();
 loadRoute();
 
 setInterval(updateLatest, 2000);
-setInterval(updateTrack, 5000);
-setInterval(updateAgeStatus, 1000);
+setInterval(updateAllTracks, 5000);
+setInterval(updateAgeStatusOnly, 1000);
 
 updateLatest();
-updateTrack();
+updateAllTracks();
 </script>
 </body>
 </html>
