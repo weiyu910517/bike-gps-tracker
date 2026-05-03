@@ -56,7 +56,7 @@ The rider only needs to press Start Tracking and allow location permission in th
 The monitor can open:
 
 ```
-/track?rider=rider01
+/monitor
 ```
 
 This page provides:
