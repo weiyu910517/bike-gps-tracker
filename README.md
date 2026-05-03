@@ -39,15 +39,15 @@ The rider can open the tracking page on a smartphone:
 
 This page provides:
 
->> GPS position acquisition from the mobile browser
->> Rider ID display
->> Start and stop tracking buttons
->> Current latitude and longitude display
->> Current speed display
->> GPS accuracy display
->> Last update time
->> Network status display
->> Local temporary storage counter
+- GPS position acquisition from the mobile browser
+- Rider ID display
+- Start and stop tracking buttons
+- Current latitude and longitude display
+- Current speed display
+- GPS accuracy display
+- Last update time
+- Network status display
+- Local temporary storage counter
 
 The rider only needs to press Start Tracking and allow location permission in the browser.
 
@@ -61,16 +61,16 @@ The monitor can open:
 
 This page provides:
 
->> Interactive map display
->> Rider's real-time position marker
->> Planned riding route display
->> Traveled trajectory display
->> Latest latitude and longitude
->> Speed in km/h
->> GPS accuracy
->> Last update time
->> Online, weak signal, and offline status indication
->> Auto-follow function for the rider marker
+- Interactive map display
+- Rider's real-time position marker
+- Planned riding route display
+- Traveled trajectory display
+- Latest latitude and longitude
+- Speed in km/h
+- GPS accuracy
+- Last update time
+- Online, weak signal, and offline status indication
+- Auto-follow function for the rider marker
 
 3. Planned Route Display
 
@@ -96,15 +96,15 @@ The smartphone uploads GPS data to the Flask server through:
 
 Each GPS data packet includes:
 
->> Rider ID
->> Latitude
->> Longitude
->> Speed
->> GPS accuracy
->> Altitude
->> Heading
->> Client timestamp
->> Server timestamp
+- Rider ID
+- Latitude
+- Longitude
+- Speed
+- GPS accuracy
+- Altitude
+- Heading
+- Client timestamp
+- Server timestamp
 
 5. Offline Buffering for Weak Network Areas
 
@@ -122,9 +122,9 @@ This is useful for mountain roads or rural areas where mobile network coverage m
 
 The monitor page evaluates the time since the last GPS update and shows the rider's communication status:
 
->> Online: recent GPS update received
->> Weak signal: GPS update delay is increasing
->> Offline: no GPS update for a long time, showing the last known position
+- Online: recent GPS update received
+- Weak signal: GPS update delay is increasing
+- Offline: no GPS update for a long time, showing the last known position
 
 This helps the monitor distinguish between a stopped rider and a temporary communication loss.
 
@@ -148,15 +148,15 @@ tracking_data/gps_log.csv
 
 The CSV includes:
 
->> Server time
->> Client time
->> Rider ID
->> Latitude
->> Longitude
->> Speed
->> Accuracy
->> Altitude
->> Heading
+- Server time
+- Client time
+- Rider ID
+- Latitude
+- Longitude
+- Speed
+- Accuracy
+- Altitude
+- Heading
 
 This allows later analysis of the riding trajectory.
 
@@ -215,26 +215,26 @@ This version is suitable for prototype testing and demonstration. The current im
 
 For long-duration bicycle races or formal use, the system should be upgraded with:
 
->> PostgreSQL or another persistent database
->> User authentication
->> GPX route file import
->> Multiple rider selection on the monitor page
->> Battery level reporting
->> Route deviation warning
->> Exportable ride history
->> More stable background tracking method for mobile devices
+- PostgreSQL or another persistent database
+- User authentication
+- GPX route file import
+- Multiple rider selection on the monitor page
+- Battery level reporting
+- Route deviation warning
+- Exportable ride history
+- More stable background tracking method for mobile devices
 
 ## Recommended Use
 
 For a 7-hour mountain-road bicycle ride, the rider should:
 
->> Use the HTTPS tracking link
->> Allow GPS permission
->> Keep mobile data enabled
->> Use a power bank
->> Keep the tracking page open
->> Avoid closing the browser tab
->> Use the same rider ID, such as rider01
+- Use the HTTPS tracking link
+- Allow GPS permission
+- Keep mobile data enabled
+- Use a power bank
+- Keep the tracking page open
+- Avoid closing the browser tab
+- Use the same rider ID, such as rider01
 
 The monitor should open:
 
