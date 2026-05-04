@@ -273,6 +273,32 @@ def monitor_page():
 # 首頁
 # =========================
 INDEX_HTML = r"""
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bike GPS Tracking</title>
+  <style>
+    body {
+      font-family: Arial, 'Microsoft JhengHei', sans-serif;
+      padding: 36px;
+      line-height: 1.6;
+      background: #f7f7f7;
+      color: #222;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      margin-bottom: 28px;
+      color: #555;
+    }
+
+    .card {
+      background: white;
       border-radius: 14px;
       padding: 20px 24px;
       margin-bottom: 20px;
