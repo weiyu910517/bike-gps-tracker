@@ -51,7 +51,7 @@ This page provides:
 
 The rider only needs to press Start Tracking and allow location permission in the browser.
 
-2. Real-Time Monitor Map
+### 2. Real-Time Monitor Map
 
 The monitor can open:
 
@@ -72,7 +72,7 @@ This page provides:
 - Online, weak signal, and offline status indication
 - Auto-follow function for the rider marker
 
-3. Planned Route Display
+### 3. Planned Route Display
 
 A planned riding route can be displayed on the monitor map. The route is defined in the Python program as a list of GPS coordinates:
 
@@ -86,7 +86,7 @@ PLANNED_ROUTE = [
 
 These points are drawn as a polyline on the map. The route can be replaced with the actual bicycle race route or GPX-converted coordinate points.
 
-4. Real-Time GPS Upload
+### 4. Real-Time GPS Upload
 
 The smartphone uploads GPS data to the Flask server through:
 
@@ -106,7 +106,7 @@ Each GPS data packet includes:
 - Client timestamp
 - Server timestamp
 
-5. Offline Buffering for Weak Network Areas
+### 5. Offline Buffering for Weak Network Areas
 
 The mobile tracking page includes a local buffering mechanism. If the rider enters an area with weak or unstable network coverage, GPS data will be stored temporarily in the phone browser's localStorage.
 
@@ -118,7 +118,7 @@ When the network is restored, the stored GPS data is automatically uploaded to t
 
 This is useful for mountain roads or rural areas where mobile network coverage may be unstable.
 
-6. Rider Status Monitoring
+### 6. Rider Status Monitoring
 
 The monitor page evaluates the time since the last GPS update and shows the rider's communication status:
 
@@ -128,7 +128,7 @@ The monitor page evaluates the time since the last GPS update and shows the ride
 
 This helps the monitor distinguish between a stopped rider and a temporary communication loss.
 
-7. Track History Display
+### 7. Track History Display
 
 The server stores recent GPS points in memory and provides them through:
 
@@ -138,7 +138,7 @@ The server stores recent GPS points in memory and provides them through:
 
 The monitor page draws these points as the rider's traveled path.
 
-8. CSV Logging
+### 8. CSV Logging
 
 The server also writes GPS data into a CSV file:
 
