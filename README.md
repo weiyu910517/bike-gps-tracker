@@ -29,7 +29,7 @@ https://bike-gps-tracker.onrender.com/monitor
 This project aims to provide a lightweight GPS tracking system for bicycle riding scenarios. The system allows a rider and a monitor to be in different locations and communicate through the internet. The rider's mobile phone collects GPS data and uploads it to the cloud server, while the monitor page displays the latest position on a map.
 
 ## Main Features
-1. Mobile GPS Tracking Page
+### 1. Mobile GPS Tracking Page
 
 The rider can open the tracking page on a smartphone:
 
