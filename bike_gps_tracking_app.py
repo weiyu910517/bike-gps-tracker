@@ -272,42 +272,89 @@ def monitor_page():
 # =========================
 # 首頁
 # =========================
-INDEX_HTML = r"""
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bike GPS Tracking</title>
-  <style>
-    body {
-      font-family: Arial, 'Microsoft JhengHei', sans-serif;
-      padding: 32px;
-      line-height: 1.6;
+MONITOR_HTML = r"""
+  document.getElementById('lng').textContent = loc.lng.toFixed(7);
+
+  let speedKmh = null;
+  if (loc.speed !== null && loc.speed !== undefined) {
+    speedKmh = loc.speed * 3.6;
+  }
+  document.getElementById('speed').textContent = speedKmh === null ? '--' : speedKmh.toFixed(1);
+  document.getElementById('accuracy').textContent = loc.accuracy === null || loc.accuracy === undefined ? '--' : loc.accuracy.toFixed(1);
+
+  const t = loc.server_time || loc.timestamp;
+  lastServerTimestamp = t ? new Date(t) : new Date();
+  document.getElementById('lastUpdate').textContent = lastServerTimestamp.toLocaleTimeString();
+}
+
+function updateAgeStatus() {
+  if (!lastServerTimestamp) {
+    document.getElementById('age').textContent = '--';
+    return;
+  }
+
+  const ageSec = (new Date() - lastServerTimestamp) / 1000;
+  document.getElementById('age').textContent = ageSec.toFixed(0) + ' 秒';
+
+  if (ageSec < 30) {
+    setStatus('Online，即時追蹤中', 'online');
+  } else if (ageSec < 180) {
+    setStatus('訊號偏弱或更新延遲', 'weak');
+  } else {
+    setStatus('Offline，顯示最後位置', 'offline');
+  }
+}
+
+async function updateLatest() {
+  try {
+    const res = await fetch('/api/latest');
+    const data = await res.json();
+    const latest = data.latest || {};
+    const loc = latest[currentRider];
+
+    if (!loc) {
+      setStatus('等待手機端資料', 'weak');
+      return;
     }
 
-    a {
-      display: block;
-      margin: 12px 0;
-      font-size: 20px;
+    const latlng = [loc.lat, loc.lng];
+
+    if (!riderMarker) {
+      riderMarker = L.marker(latlng).addTo(map).bindPopup(currentRider);
+    } else {
+      riderMarker.setLatLng(latlng);
     }
 
-    code {
-      background: #eee;
-      padding: 2px 6px;
-      border-radius: 4px;
+    updateInfo(loc);
+
+    if (followRider) {
+      map.panTo(latlng);
     }
-  </style>
-</head>
-<body>
-  <h1>Bike GPS Tracking</h1>
-  <p>自行車 GPS 即時追蹤系統</p>
+  } catch (err) {
+    setStatus('伺服器連線錯誤', 'offline');
+  }
+}
 
-  <a href="/monitor">電腦端監控頁面 /monitor</a>
-  <a href="/track?rider=rider01">手機端追蹤頁面 /track?rider=rider01</a>
+async function updateTrack() {
+  try {
+    const res = await fetch('/api/track?rider=' + encodeURIComponent(currentRider));
+    const data = await res.json();
+    const track = data.track || [];
+    const latlngs = track.map(p => [p.lat, p.lng]);
+    trackLine.setLatLngs(latlngs);
+  } catch (err) {
+    // ignore
+  }
+}
 
-  <p>部署到 Render 之後，網址會類似：</p>
-  <code>https://bike-gps-tracker.onrender.com/track?rider=rider01</code>
+initMap();
+loadRoute();
+setInterval(updateLatest, 2000);
+setInterval(updateTrack, 5000);
+setInterval(updateAgeStatus, 1000);
+updateLatest();
+updateTrack();
+</script>
 </body>
 </html>
 """
