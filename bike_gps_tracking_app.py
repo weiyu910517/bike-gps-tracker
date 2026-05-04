@@ -273,41 +273,88 @@ def monitor_page():
 # 首頁
 # =========================
 INDEX_HTML = r"""
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bike GPS Tracking</title>
-  <style>
-    body {
-      font-family: Arial, 'Microsoft JhengHei', sans-serif;
-      padding: 32px;
-      line-height: 1.6;
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      max-width: 760px;
     }
 
-    a {
-      display: block;
-      margin: 12px 0;
-      font-size: 20px;
+    .card h2 {
+      margin-top: 0;
+      font-size: 22px;
+    }
+
+    a.button-link {
+      display: inline-block;
+      margin: 8px 8px 8px 0;
+      padding: 10px 16px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      background: #1976d2;
+    }
+
+    a.monitor {
+      background: #2e7d32;
+    }
+
+    a.rider01 {
+      background: #d32f2f;
+    }
+
+    a.rider02 {
+      background: #1976d2;
     }
 
     code {
-      background: #eee;
-      padding: 2px 6px;
-      border-radius: 4px;
+      display: block;
+      background: #eeeeee;
+      padding: 8px 10px;
+      border-radius: 6px;
+      margin: 6px 0 14px 0;
+      word-break: break-all;
+    }
+
+    .note {
+      color: #666;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
   <h1>Bike GPS Tracking</h1>
-  <p>自行車 GPS 即時追蹤系統</p>
+  <p class="subtitle">自行車 GPS 即時追蹤系統</p>
 
-  <a href="/monitor">電腦端監控頁面 /monitor</a>
-  <a href="/track?rider=rider01">手機端追蹤頁面 /track?rider=rider01</a>
+  <div class="card">
+    <h2>監控端</h2>
+    <p>監控者使用此頁面，同時查看 rider01 與 rider02 的即時位置與軌跡。</p>
+    <a class="button-link monitor" href="/monitor">開啟多人監控頁面</a>
+    <code>https://bike-gps-tracker.onrender.com/monitor</code>
+  </div>
 
-  <p>部署到 Render 之後，網址會類似：</p>
-  <code>https://bike-gps-tracker.onrender.com/track?rider=rider01</code>
+  <div class="card">
+    <h2>手機端追蹤頁面</h2>
+    <p>不同騎手請使用不同的 Rider ID 連結，避免資料混在一起。</p>
+
+    <h3>騎手 1：rider01</h3>
+    <a class="button-link rider01" href="/track?rider=rider01">開啟 rider01 追蹤頁面</a>
+    <code>https://bike-gps-tracker.onrender.com/track?rider=rider01</code>
+
+    <h3>騎手 2：rider02</h3>
+    <a class="button-link rider02" href="/track?rider=rider02">開啟 rider02 追蹤頁面</a>
+    <code>https://bike-gps-tracker.onrender.com/track?rider=rider02</code>
+  </div>
+
+  <div class="card">
+    <h2>使用方式</h2>
+    <p>1. 騎手 1 開啟 rider01 連結，按下「開始追蹤」，並允許 GPS 權限。</p>
+    <p>2. 騎手 2 開啟 rider02 連結，按下「開始追蹤」，並允許 GPS 權限。</p>
+    <p>3. 監控者開啟 /monitor，即可同時查看兩位騎手的位置。</p>
+    <p class="note">建議騎手使用 HTTPS 網址、保持瀏覽器頁面開啟，並搭配行動電源。</p>
+  </div>
 </body>
 </html>
 """
